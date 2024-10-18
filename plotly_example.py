@@ -4,7 +4,7 @@ import plotly.express as px
 from dash import Dash, dcc, html, Input, Output
 import webbrowser
 
-# Updated JSON data for states, including Arizona and Arkansas
+# Updated JSON data for states, including institutions
 json_data = '''
 [
   {
@@ -16,7 +16,33 @@ json_data = '''
     "AsianTotal": 69808,
     "HawaiianTotal": 2253,
     "OtherTotal": 279556,
-    "TwoOrMoreTotal": 185632
+    "TwoOrMoreTotal": 185632,
+    "Institutions": {
+      "Schools": [
+        {
+          "Name": "School A",
+          "Type": "Public",
+          "TotalStudents": 500
+        },
+        {
+          "Name": "School B",
+          "Type": "Private",
+          "TotalStudents": 300
+        }
+      ],
+      "Colleges": [
+        {
+          "Name": "College A",
+          "Type": "Community",
+          "TotalStudents": 1200
+        },
+        {
+          "Name": "College B",
+          "Type": "University",
+          "TotalStudents": 1500
+        }
+      ]
+    }
   },
   {
     "State": "Alaska",
@@ -27,7 +53,33 @@ json_data = '''
     "AsianTotal": 47464,
     "HawaiianTotal": 11209,
     "OtherTotal": 97324,
-    "TwoOrMoreTotal": 82727
+    "TwoOrMoreTotal": 82727,
+    "Institutions": {
+      "Schools": [
+        {
+          "Name": "School A",
+          "Type": "Public",
+          "TotalStudents": 500
+        },
+        {
+          "Name": "School B",
+          "Type": "Private",
+          "TotalStudents": 300
+        }
+      ],
+      "Colleges": [
+        {
+          "Name": "College A",
+          "Type": "Community",
+          "TotalStudents": 1200
+        },
+        {
+          "Name": "College B",
+          "Type": "University",
+          "TotalStudents": 1500
+        }
+      ]
+    }
   },
   {
     "State": "Arizona",
@@ -38,7 +90,33 @@ json_data = '''
     "AsianTotal": 240642,
     "HawaiianTotal": 14116,
     "OtherTotal": 1511155,
-    "TwoOrMoreTotal": 961794
+    "TwoOrMoreTotal": 961794,
+    "Institutions": {
+      "Schools": [
+        {
+          "Name": "School A",
+          "Type": "Public",
+          "TotalStudents": 500
+        },
+        {
+          "Name": "School B",
+          "Type": "Private",
+          "TotalStudents": 300
+        }
+      ],
+      "Colleges": [
+        {
+          "Name": "College A",
+          "Type": "Community",
+          "TotalStudents": 1200
+        },
+        {
+          "Name": "College B",
+          "Type": "University",
+          "TotalStudents": 1500
+        }
+      ]
+    }
   },
   {
     "State": "Arkansas",
@@ -49,12 +127,37 @@ json_data = '''
     "AsianTotal": 47413,
     "HawaiianTotal": 11117,
     "OtherTotal": 293258,
-    "TwoOrMoreTotal": 203476
+    "TwoOrMoreTotal": 203476,
+    "Institutions": {
+      "Schools": [
+        {
+          "Name": "School A",
+          "Type": "Public",
+          "TotalStudents": 500
+        },
+        {
+          "Name": "School B",
+          "Type": "Private",
+          "TotalStudents": 300
+        }
+      ],
+      "Colleges": [
+        {
+          "Name": "College A",
+          "Type": "Community",
+          "TotalStudents": 1200
+        },
+        {
+          "Name": "College B",
+          "Type": "University",
+          "TotalStudents": 1500
+        }
+      ]
+    }
   }
 ]
 '''
 
-# Parse the JSON data
 # Parse the JSON data
 data_dict = json.loads(json_data)
 
@@ -70,7 +173,9 @@ for state_data in data_dict:
         'Asian': state_data['AsianTotal'],
         'Hawaiian': state_data['HawaiianTotal'],
         'Other': state_data['OtherTotal'],
-        'TwoOrMore': state_data['TwoOrMoreTotal']
+        'TwoOrMore': state_data['TwoOrMoreTotal'],
+        'TotalSchools': sum(school['TotalStudents'] for school in state_data['Institutions']['Schools']),
+        'TotalColleges': sum(college['TotalStudents'] for college in state_data['Institutions']['Colleges'])
     })
 
 # Convert to DataFrame for bar chart
@@ -80,8 +185,18 @@ df_bar = pd.DataFrame(bar_data)
 app = Dash(__name__)
 
 # App layout with CSS for styling
-app.layout = html.Div(style={'font-family': 'Arial', 'background-color': '#f9f9f9', 'padding': '20px'}, children=[
-    html.H1("Population Distribution in Selected States", style={'textAlign': 'center', 'color': '#333'}),
+app.layout = html.Div(style={
+    'font-family': 'Arial', 
+    'background-color': '#f9f9f9', 
+    'padding': '20px',
+    'max-width': '800px',  # Limit the max width of the layout
+    'margin': '0 auto'  # Center the layout
+}, children=[
+    html.H1("Population Distribution in Selected States", style={
+        'textAlign': 'center', 
+        'color': '#333',
+        'margin-bottom': '20px'  # Spacing below the title
+    }),
     
     # Bar chart
     dcc.Graph(
@@ -89,7 +204,7 @@ app.layout = html.Div(style={'font-family': 'Arial', 'background-color': '#f9f9f
         figure=px.bar(
             df_bar, 
             x='State', 
-            y=df_bar.columns[1:], 
+            y=df_bar.columns[1:7],  # Only population data
             title='Population by Race and Ethnicity',
             labels={'value': 'Population Count', 'variable': 'Race/Ethnicity'},
             template='plotly_white',  # Light background for charts
@@ -103,20 +218,40 @@ app.layout = html.Div(style={'font-family': 'Arial', 'background-color': '#f9f9f
             hovermode="x unified",
             margin=dict(l=40, r=40, t=40, b=40),
             legend_title_text='Race/Ethnicity',
-            legend=dict(yanchor="top", y=1.05, xanchor="left", x=0.01),
+            legend=dict(yanchor="top", y=0.5, xanchor="left", x=1.05),  # Legend to the right
+            height=250,  # Smaller height for the bar chart
+            width=600  # Smaller width for the bar chart
         )
     ),
 
-    # Pie chart
-    dcc.Graph(
-        id='state-pie-chart',
-        # Initially empty pie chart
-        figure=px.pie(title='Click a state in the bar chart to see the population breakdown.').update_layout(
-            title_font_size=18,
-            title_x=0.5,
-            margin=dict(l=40, r=40, t=40, b=40)
-        )
-    )
+    # Spacing between charts
+    html.Div(style={'height': '20px'}),  # Add space between bar and pie chart
+
+    # Row for Population and Institutions data
+    html.Div(style={'display': 'flex', 'justify-content': 'space-between'}, children=[
+        # Pie chart
+        html.Div(style={'flex': '1', 'margin-right': '10px'}, children=[
+            dcc.Graph(
+                id='state-pie-chart',
+                # Initially empty pie chart
+                figure=px.pie(title='Click a state in the bar chart to see the population breakdown.').update_layout(
+                    title_font_size=18,
+                    title_x=0.5,
+                    margin=dict(l=40, r=40, t=40, b=40),
+                    height=250,
+                    width=300
+                )
+            )
+        ]),
+        
+        # Institutions Data Section
+        html.Div(style={'flex': '1', 'margin-left': '10px'}, children=[
+            html.Div(id='institutions-data', style={'display': 'none'}, children=[
+                html.H3(id='institutions-title', style={'textAlign': 'center', 'color': '#333'}),
+                dcc.Graph(id='state-institution-bar-chart')
+            ])
+        ])
+    ])
 ])
 
 # Callback to update the pie chart based on bar chart clicks
@@ -127,35 +262,83 @@ app.layout = html.Div(style={'font-family': 'Arial', 'background-color': '#f9f9f
 def update_pie_chart(clickData):
     if clickData is None:
         # Return an empty pie chart if no state is selected
-        return px.pie(title='Click a state in the bar chart to see the population breakdown.')
-    
-    # Get the selected state from the click data
+        return px.pie(title='Click a state in the bar chart to see the population breakdown.').update_layout(
+            title_font_size=18,
+            title_x=0.5,
+            margin=dict(l=40, r=40, t=40, b=40),
+            height=250,
+            width=300
+        )
+
+    # Get the selected state
     selected_state = clickData['points'][0]['x']
-    selected_data = df_bar[df_bar['State'] == selected_state]
-
-    # Ensure the column names are strings and values are float
-    names = selected_data.columns[1:].astype(str)
-    values = selected_data.iloc[0, 1:].astype(float)
-
-    # Return the pie chart figure
-    return px.pie(
-        names=names,
-        values=values,
-        title=f'{selected_state} Population Breakdown',
-        color_discrete_sequence=px.colors.sequential.Blues,  # Color gradient for pie chart
-        hole=0.4  # Donut style pie chart for better readability
-    ).update_traces(
-        textposition='inside', 
-        textinfo='percent+label',  # Show percentage and labels
-        hoverinfo='label+percent+value'
-    ).update_layout(
-        title_font_size=20,
+    
+    # Get the data for the selected state
+    state_data = df_bar[df_bar['State'] == selected_state].iloc[0]
+    
+    # Create the pie chart
+    fig = px.pie(
+        names=state_data.index[1:7],
+        values=state_data[1:7],
+        title=f'Population Breakdown for {selected_state}',
+        labels={'value': 'Population Count', 'variable': 'Race/Ethnicity'}
+    )
+    fig.update_layout(
+        title_font_size=18,
         title_x=0.5,
         margin=dict(l=40, r=40, t=40, b=40),
-        showlegend=True
+        height=250,
+        width=300
     )
+    
+    return fig
 
-# Run the app
+# Callback to update the institutions data section based on bar chart clicks
+@app.callback(
+    Output('institutions-data', 'style'),
+    Output('institutions-title', 'children'),
+    Output('state-institution-bar-chart', 'figure'),
+    Input('state-bar-chart', 'clickData')
+)
+def update_institution_chart(clickData):
+    if clickData is None:
+        # Return hidden institutions data if no state is selected
+        return {'display': 'none'}, '', px.bar(x=[], y=[])
+
+    # Get the selected state
+    selected_state = clickData['points'][0]['x']
+    
+    # Get institutions data for the selected state
+    state_data = next(item for item in data_dict if item["State"] == selected_state)
+    school_data = state_data['Institutions']['Schools']
+    college_data = state_data['Institutions']['Colleges']
+
+    # Prepare data for the institutions bar chart
+    institution_names = [school['Name'] for school in school_data] + [college['Name'] for college in college_data]
+    institution_totals = [school['TotalStudents'] for school in school_data] + [college['TotalStudents'] for college in college_data]
+    
+    # Create the institutions bar chart
+    fig = px.bar(
+        x=institution_names,
+        y=institution_totals,
+        title=f'Total Students in Institutions for {selected_state}',
+        labels={'value': 'Total Students', 'variable': 'Institution Type'},
+        template='plotly_white',
+        color_discrete_sequence=px.colors.qualitative.Bold
+    ).update_layout(
+        title_font_size=22,
+        title_x=0.5,
+        xaxis_tickangle=-45,
+        yaxis_title='Total Students',
+        hovermode="x unified",
+        margin=dict(l=40, r=40, t=40, b=40),
+        height=250,
+        width=600
+    )
+    
+    return {'display': 'block'}, f'Institutions in {selected_state}', fig
+
+# Run the Dash app
 if __name__ == '__main__':
-    webbrowser.open('http://127.0.0.1:8050')  # Automatically open in the default browser
-    app.run_server(debug=True, port=8050)
+    webbrowser.open_new('http://127.0.0.1:8050/')  # Open in the default web browser
+    app.run_server(debug=True)
